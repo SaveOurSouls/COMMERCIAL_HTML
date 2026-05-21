@@ -1,7 +1,7 @@
 param(
     [switch]$NoBrowser,
     [switch]$SkipInstall,
-    [string]$Host = "127.0.0.1",
+    [string]$BindHost = "127.0.0.1",
     [int]$Port = 8000
 )
 
@@ -26,7 +26,7 @@ if (-not (Test-Path ".env") -and (Test-Path ".env.example")) {
 }
 
 if (-not $NoBrowser) {
-    & "$PSScriptRoot\open_chrome.ps1" -Url "http://$Host`:$Port"
+    & "$PSScriptRoot\open_chrome.ps1" -Url "http://$BindHost`:$Port"
 }
 
-python -m uvicorn app.main:app --host $Host --port $Port --reload
+python -m uvicorn app.main:app --host $BindHost --port $Port --reload

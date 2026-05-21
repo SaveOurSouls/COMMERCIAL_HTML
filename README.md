@@ -77,6 +77,9 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\start.ps1 -SkipInstal
 
 # Запуск на другом порту
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\start.ps1 -Port 8080
+
+# Запуск на другом хосте
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\start.ps1 -BindHost 0.0.0.0
 ```
 
 Если Chrome не установлен, скрипт откроет адрес в браузере по умолчанию.
