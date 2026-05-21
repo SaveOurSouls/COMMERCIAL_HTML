@@ -1,0 +1,31 @@
+[project]
+name = "process-costing-web"
+version = "0.1.0"
+description = "Cloud-ready web application for manufacturing process and pricing calculations."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "sqlmodel",
+    "pydantic-settings",
+    "email-validator",
+    "python-multipart",
+    "passlib[bcrypt]",
+    "python-jose[cryptography]",
+    "reportlab",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+]
+
+[build-system]
+requires = ["setuptools>=69.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

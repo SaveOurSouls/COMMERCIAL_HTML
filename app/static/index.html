@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Process Costing Web</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; background: #f6f8fb; color: #1b2430; }
+    h1, h2 { margin-bottom: 8px; }
+    .card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 14px; box-shadow: 0 2px 10px rgba(0,0,0,.06); }
+    input, button { padding: 8px; margin: 4px 0; width: 100%; box-sizing: border-box; }
+    button { background: #1d61ff; color: #fff; border: 0; border-radius: 6px; cursor: pointer; }
+    button:hover { background: #154ed1; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+    code { background: #eef2f8; padding: 2px 4px; border-radius: 4px; }
+    pre { background: #0d1117; color: #d6deeb; padding: 12px; border-radius: 10px; overflow: auto; }
+  </style>
+</head>
+<body>
+  <h1>Расчет производственных процессов</h1>
+  <p>MVP‑интерфейс для ЗКЗ / КБ / СПЯ / ЗКП / КП / Счета.</p>
+
+  <div class="grid">
+    <div class="card">
+      <h2>1) Регистрация / Вход</h2>
+      <input id="email" placeholder="Email" value="demo@example.com" />
+      <input id="name" placeholder="ФИО" value="Demo User" />
+      <input id="password" type="password" placeholder="Пароль" value="demo12345" />
+      <button onclick="register()">Зарегистрироваться</button>
+      <button onclick="login()">Войти</button>
+      <p><b>JWT:</b> <code id="token"></code></p>
+    </div>
+
+    <div class="card">
+      <h2>2) Новый проект (ЗКЗ)</h2>
+      <input id="project-name" placeholder="Название проекта" value="КП для заказчика #1" />
+      <input id="customer" placeholder="Заказчик" value="ООО Заказчик" />
+      <input id="contractor" placeholder="Исполнитель" value="ООО Исполнитель" />
+      <button onclick="createProject()">Создать проект</button>
+      <p><b>Project ID:</b> <code id="projectId"></code></p>
+    </div>
+
+    <div class="card">
+      <h2>3) Операция (БД.ОП)</h2>
+      <input id="op-group" placeholder="Группа" value="10" />
+      <input id="op-name" placeholder="Операция" value="Сборка узла" />
+      <input id="op-minutes" placeholder="Мин/цикл" value="6" />
+      <input id="op-rate" placeholder="Ставка/час" value="700" />
+      <button onclick="createOperation()">Добавить операцию</button>
+      <p><b>Operation ID:</b> <code id="operationId"></code></p>
+    </div>
+
+    <div class="card">
+      <h2>4) КБ + СПЯ + маршрут</h2>
+      <button onclick="addDemoAssembly()">Добавить демо КБ1 со спецификацией и операцией</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>5) Финальный расчет и PDF</h2>
+    <button onclick="loadCalculation()">Показать расчет (Кол-во1..4)</button>
+    <p>
+      <button onclick="downloadPdf('offer')">Скачать КП (PDF)</button>
+      <button onclick="downloadPdf('invoice')">Скачать счет (PDF)</button>
+    </p>
+    <pre id="result">{} </pre>
+  </div>
+
+  <script>
+    const api = "/api";
+    let jwt = "";
+    let currentProjectId = null;
+    let lastOperationId = null;
+    let lastAssemblyId = null;
+
+    function authHeaders() {
+      return jwt ? { Authorization: `Bearer ${jwt}` } : {};
+    }
+
+    async function register() {
+      const payload = {
+        email: document.getElementById("email").value,
+        full_name: document.getElementById("name").value,
+        password: document.getElementById("password").value
+      };
+      await fetch(`${api}/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      await login();
+    }
+
+    async function login() {
+      const payload = {
+        email: document.getElementById("email").value,
+        password: document.getElementById("password").value
+      };
+      const resp = await fetch(`${api}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await resp.json();
+      jwt = data.access_token || "";
+      document.getElementById("token").textContent = jwt ? "получен" : "ошибка";
+    }
+
+    async function createProject() {
+      const payload = {
+        name: document.getElementById("project-name").value,
+        customer_name: document.getElementById("customer").value,
+        contractor_name: document.getElementById("contractor").value,
+        overhead_percent: 12,
+        margin_percent: 20,
+        vat_percent: 20
+      };
+      const resp = await fetch(`${api}/projects`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify(payload)
+      });
+      const data = await resp.json();
+      currentProjectId = data.id;
+      document.getElementById("projectId").textContent = currentProjectId || "";
+    }
+
+    async function createOperation() {
+      const payload = {
+        group_code: document.getElementById("op-group").value,
+        operation_name: document.getElementById("op-name").value,
+        minutes_per_cycle: Number(document.getElementById("op-minutes").value),
+        rate_per_hour: Number(document.getElementById("op-rate").value)
+      };
+      const resp = await fetch(`${api}/operations`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify(payload)
+      });
+      const data = await resp.json();
+      lastOperationId = data.id;
+      document.getElementById("operationId").textContent = lastOperationId || "";
+    }
+
+    async function addDemoAssembly() {
+      if (!currentProjectId || !lastOperationId) {
+        alert("Сначала создайте проект и операцию.");
+        return;
+      }
+      const assemblyResp = await fetch(`${api}/projects/${currentProjectId}/assemblies`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({
+          code: "КБ1",
+          product_name: "Изделие А",
+          qty_tier_1: 50,
+          qty_tier_2: 200,
+          qty_tier_3: 500,
+          qty_tier_4: 1000
+        })
+      });
+      const assembly = await assemblyResp.json();
+      lastAssemblyId = assembly.id;
+
+      await fetch(`${api}/assemblies/${lastAssemblyId}/components`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({
+          article: "ART-001",
+          component_type: "Материал",
+          description: "Лист ПВХ",
+          qty_per_set: 1.2,
+          unit: "м2",
+          unit_price: 180
+        })
+      });
+
+      await fetch(`${api}/assemblies/${lastAssemblyId}/route-steps`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({
+          operation_catalog_id: lastOperationId,
+          repeats_per_set: 1,
+          operators_count: 2
+        })
+      });
+
+      alert("КБ1, спецификация и операция добавлены");
+    }
+
+    async function loadCalculation() {
+      const resp = await fetch(`${api}/projects/${currentProjectId}/calculation`, {
+        headers: { ...authHeaders() }
+      });
+      const data = await resp.json();
+      document.getElementById("result").textContent = JSON.stringify(data, null, 2);
+    }
+
+    function downloadPdf(kind) {
+      if (!currentProjectId) return;
+      const url = `${api}/projects/${currentProjectId}/pdf/${kind}?tier=1`;
+      window.open(url, "_blank");
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.pyo
+*.pyd
+.DS_Store
+*.sqlite3
+*.db
+.env
+process_costing_web.egg-info/
