@@ -44,6 +44,43 @@ uvicorn app.main:app --reload
 
 Swagger API: `http://127.0.0.1:8000/docs`
 
+## Запуск на Windows 11 + Google Chrome
+
+### Вариант 1: одним кликом (BAT)
+
+```bat
+scripts\windows\start.bat
+```
+
+Что делает скрипт:
+
+1. Создает `.venv` (если ее нет)
+2. Ставит зависимости
+3. Создает `.env` из `.env.example`
+4. Открывает `http://127.0.0.1:8000` в Google Chrome
+5. Стартует backend
+
+### Вариант 2: PowerShell (гибкий)
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\start.ps1
+```
+
+Полезные флаги:
+
+```powershell
+# Не открывать браузер
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\start.ps1 -NoBrowser
+
+# Пропустить повторную установку зависимостей
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\start.ps1 -SkipInstall
+
+# Запуск на другом порту
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\start.ps1 -Port 8080
+```
+
+Если Chrome не установлен, скрипт откроет адрес в браузере по умолчанию.
+
 ## Структура проекта
 
 ```text
