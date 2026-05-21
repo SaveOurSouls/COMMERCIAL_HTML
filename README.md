@@ -84,6 +84,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\start.ps1 -BindHost 0
 
 Если Chrome не установлен, скрипт откроет адрес в браузере по умолчанию.
 
+Скрипты автоматически проверяют `py`, `python`, `python3`. Если ничего не найдено — установите Python 3.11+ и включите опцию Add Python to PATH.
+
 ## Структура проекта
 
 ```text
